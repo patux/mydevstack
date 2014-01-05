@@ -1,0 +1,4 @@
+export OS_USERNAME=demo                               #username
+export OS_TENANT_NAME=demo                            #project name
+export OS_PASSWORD=nova                               #password
+export OS_AUTH_URL=http://127.0.0.1:5000/v2.0         #URL of the authentication(keyst.)
