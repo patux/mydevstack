@@ -12,9 +12,15 @@ Ddefault is stable/grizzly
 
     $ git clone --recursive https://github.com/patux/mydevstack.git
     $ cd mydevstack
-    $ vim Vagrantfile # Edit proxy values
-    $ vim puppet/manifests/vagrant.pp    #Edit proxy values
     $ vagrant up
+
+**NOTE** If you are behind a proxy create common.yaml
+
+    $ git clone --recursive https://github.com/patux/mydevstack.git
+    $ cd mydevstack
+    $ cp etc/common-sample.yaml etc/common.yaml  
+    $ vi etc/common.yaml
+    $ vagrant up 
 
 ## Contribute for Openstack
 
