@@ -107,3 +107,24 @@ echo SWIFT_LOOPBACK_DISK_SIZE=10000000 >> localrc
 echo SWIFT_HASH=stack >> localrc
 
 ./stack.sh
+# Allowing guests in DevStack to talk to outside world 
+# https://ask.openstack.org/en/question/1830/allowing-guests-in-devstack-to-talk-to-outside-world/
+/sbin/iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+# Save lists
+# https://help.ubuntu.com/community/IptablesHowTo
+/sbin/iptables-save -c > /etc/iptables.rules
+cat << EOF > /etc/network/if-pre-up.d/iptablesload
+#!/bin/sh
+/sbin/iptables-restore < /etc/iptables.rules
+exit 0
+EOF
+cat << EOF > /etc/network/if-post-down.d/iptablessave
+#!/bin/sh
+/sbin/iptables-save -c > /etc/iptables.rules
+if [ -f /etc/iptables.downrules ]; then
+    /sbin/iptables-restore < /etc/iptables.downrules
+fi
+exit 0
+EOF
+chmod +x /etc/network/if-post-down.d/iptablessave
+chmod +x /etc/network/if-pre-up.d/iptablesload
