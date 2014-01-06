@@ -25,7 +25,7 @@ echo VERBOSE=True >> localrc
 echo LOG_COLOR=False >> localrc
 echo SCREEN_LOGDIR=/opt/stack/logs >> localrc
 
-echo disable_service n-net >> localrc
+echo disable_service n-net tempest >> localrc
 echo enable_service swift >> localrc
 
 # Enable Heat & ceilometer
@@ -83,17 +83,17 @@ http://fedorapeople.org/groups/heat/prebuilt-jeos-images/F18-i386-cfntools.qcow2
 #echo "# for the private network in your Vagrantfile. The combination of" >> localrc
 #echo "# FLAT_INTERFACE and PUBLIC_INTERFACE indicates that OpenStack should" >> localrc
 #echo "# bridge network traffic over eth1." >> localrc
-#<% if has_variable?("ipaddress_eth1") %><% then %>
-#echo HOST_IP=<%= @ipaddress_eth1 %> >> localrc
-#echo FLOATING_RANGE=$(echo <%= @ipaddress_eth1 %> | cut -d'.' -f1-3).224/27 >> localrc
-#echo PUBLIC_INTERFACE=eth1 >> localrc
-#echo HOST_IP_IFACE=eth1 >> localrc
-#<% else %>
-#echo HOST_IP=<%= @ipaddress_eth0 %> >> localrc
-#echo FLOATING_RANGE=$(echo <%= @ipaddress_eth0 %> | cut -d'.' -f1-3).224/27 >> localrc
-#echo PUBLIC_INTERFACE=eth0 >> localrc
-#echo HOST_IP_IFACE=eth0 >> localrc
-##<% end %>
+<% if has_variable?("ipaddress_eth1") %><% then %>
+echo HOST_IP=<%= @ipaddress_eth1 %> >> localrc
+echo FLOATING_RANGE=$(echo <%= @ipaddress_eth1 %> | cut -d'.' -f1-3).224/27 >> localrc
+echo PUBLIC_INTERFACE=eth1 >> localrc
+echo HOST_IP_IFACE=eth1 >> localrc
+<% else %>
+echo HOST_IP=<%= @ipaddress_eth0 %> >> localrc
+echo FLOATING_RANGE=$(echo <%= @ipaddress_eth0 %> | cut -d'.' -f1-3).224/27 >> localrc
+echo PUBLIC_INTERFACE=eth0 >> localrc
+echo HOST_IP_IFACE=eth0 >> localrc
+<% end %>
 #echo FLAT_INTERFACE=br100 >> localrc
 #echo SCHEDULER=nova.scheduler.simple.SimpleScheduler >> localrc
 #echo EXTRA_OPTS=\(scheduler_default_filters=AllHostsFilter\) >> localrc
