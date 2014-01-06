@@ -25,8 +25,7 @@ echo VERBOSE=True >> localrc
 echo LOG_COLOR=False >> localrc
 echo SCREEN_LOGDIR=/opt/stack/logs >> localrc
 
-echo disable_service n-net tempest >> localrc
-echo enable_service swift >> localrc
+echo disable_service n-net >> localrc
 
 # Enable Heat & ceilometer
 echo ENABLED_SERVICES+=,\
@@ -66,6 +65,7 @@ q-meta,\
 q-svc,\
 quantum,\
 rabbit,\
+swift,\
 sysstat\
 >> localrc
 
