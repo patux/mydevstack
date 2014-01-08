@@ -1,6 +1,7 @@
 class aptitude {
   exec { "aptitude-update":
     command => "bash -c 'source /etc/environment;/usr/bin/apt-get update'",
+    timeout   => 0,
     refreshonly => false;
   }
 
