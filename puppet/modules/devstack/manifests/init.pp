@@ -1,4 +1,4 @@
-class devstack ($devstack_branch = "stable/grizzly") {
+class devstack ($devstack_branch = "master") {
   file {"/home/vagrant/install_devstack.sh":
     owner => vagrant,
     group => vagrant,

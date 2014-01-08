@@ -1,7 +1,13 @@
 #!/bin/bash
+# Base template to create a localrc to bulid devstack
+#
+# A reference for a good localrc here:
+# http://www.sebastien-han.fr/blog/2013/08/16/best-localrc-for-devstack/
+#
 . /etc/environment
 git clone https://github.com/openstack-dev/devstack.git -b <%= @devstack_branch %> devstack
 cd devstack
+# Build localrc
 echo ADMIN_PASSWORD=password > localrc
 echo MYSQL_PASSWORD=password >> localrc
 echo RABBIT_PASSWORD=password >> localrc
@@ -25,9 +31,13 @@ echo VERBOSE=True >> localrc
 echo LOG_COLOR=False >> localrc
 echo SCREEN_LOGDIR=/opt/stack/logs >> localrc
 
-echo disable_service n-net >> localrc
+# Disabled  services
+echo DISABLED_SERVICES+=,\
+n-net,\
+tempest\
+>> localrc
 
-# Enable Heat & ceilometer
+# Enabled services
 echo ENABLED_SERVICES+=,\
 c-api,\
 c-sch,\
@@ -66,7 +76,11 @@ q-svc,\
 quantum,\
 rabbit,\
 swift,\
-sysstat\
+sysstat,\
+trove,\
+tr-api,\
+tr-tmgr,\
+tr-cond\
 >> localrc
 
 echo IMAGE_URLS+=,\
@@ -82,7 +96,7 @@ http://fedorapeople.org/groups/heat/prebuilt-jeos-images/F18-i386-cfntools.qcow2
 #echo "# Network configuration. HOST_IP should be the same as the IP you used" >> localrc
 #echo "# for the private network in your Vagrantfile. The combination of" >> localrc
 #echo "# FLAT_INTERFACE and PUBLIC_INTERFACE indicates that OpenStack should" >> localrc
-#echo "# bridge network traffic over eth1." >> localrc
+#echo "# bridge network traffic over ethX." >> localrc
 <% if has_variable?("ipaddress_eth1") %><% then %>
 echo HOST_IP=<%= @ipaddress_eth1 %> >> localrc
 echo FLOATING_RANGE=$(echo <%= @ipaddress_eth1 %> | cut -d'.' -f1-3).224/27 >> localrc
@@ -97,7 +111,10 @@ echo HOST_IP_IFACE=eth0 >> localrc
 #echo FLAT_INTERFACE=br100 >> localrc
 #echo SCHEDULER=nova.scheduler.simple.SimpleScheduler >> localrc
 #echo EXTRA_OPTS=\(scheduler_default_filters=AllHostsFilter\) >> localrc
-#echo "OFFLINE=True" >> localrc
+
+#echo OFFLINE=True >> localrc
+echo RECLONE=yes >> localrc
+echo VOLUME_BACKING_FILE_SIZE=5120M >> localrc
 
 #gre tunnels
 echo ENABLE_TENANT_TUNNELS=True >> localrc
@@ -105,8 +122,10 @@ echo TENANT_TUNNEL_RANGES=1:1000 >> localrc
 echo OVS_ENABLE_TUNNELING=True >> localrc
 echo SWIFT_LOOPBACK_DISK_SIZE=10000000 >> localrc
 echo SWIFT_HASH=stack >> localrc
-
-./stack.sh
+#
+# Build vms-talk.sh script
+cat << EOS > $HOME/vms-talk.sh
+#!/bin/bash
 # Allowing guests in DevStack to talk to outside world 
 # https://ask.openstack.org/en/question/1830/allowing-guests-in-devstack-to-talk-to-outside-world/
 /sbin/iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
@@ -128,3 +147,8 @@ exit 0
 EOF
 chmod +x /etc/network/if-post-down.d/iptablessave
 chmod +x /etc/network/if-pre-up.d/iptablesload
+EOS
+chmod +x $HOME/vms-talk.sh
+
+./stack.sh
+

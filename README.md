@@ -1,25 +1,28 @@
 # Vagrant Devstack Environment
 
+This environments creates a devstack environment.
+Also if you are behind a proxy this environment adds the proper modules to get and configure the environment behing it 
+
 http://devstack.org/
 
-The devstack install process is kicked into the background.  The standard output of the install is redirected to /opt/stack/logs/stack.sh.log 
+The devstack install process is kicked into the background.  The standard output of the install is redirected to /opt/stack/logs/stack.sh.log and /tmp/devstack-install.log 
 
 You can change the branch to use to build the environment in: puppet/modules/devstack/manifests/nodes.pp 
-Ddefault is stable/grizzly
+Ddefault is **master**
 
 
 ## Instructions
-
+### Get the code and prepare the environment
     $ git clone --recursive https://github.com/patux/mydevstack.git
     $ cd mydevstack
-    $ vagrant up
 
-**NOTE** If you are behind a proxy create common.yaml
+**NOTE** If you are behind a proxy create common.yaml and modify to fit your needs
 
-    $ git clone --recursive https://github.com/patux/mydevstack.git
-    $ cd mydevstack
     $ cp etc/common-sample.yaml etc/common.yaml  
     $ vi etc/common.yaml
+
+### Launch the environment
+
     $ vagrant up 
 
 ## Contribute for Openstack
