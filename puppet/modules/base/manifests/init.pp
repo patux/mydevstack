@@ -1,5 +1,5 @@
 class base {
-  $base_packages = [ "openjdk-6-jre", "curl", "git-core", "vim", "wget", "libssl0.9.8", "build-essential", "libsqlite3-dev", "libffi-dev", "git-review", "python-dev" ]
+  $base_packages = [ "curl", "git-core", "vim", "wget", "libssl0.9.8", "build-essential", "libsqlite3-dev", "libffi-dev", "git-review", "python-dev" ]
 
   exec {"hold kernel":
     command   => "/usr/bin/apt-mark hold linux-image-`uname -r`; echo ",

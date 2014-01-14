@@ -57,9 +57,13 @@ Vagrant.configure("2") do |config|
       config.vm.synced_folder ssh_dir, "/home/vagrant/.host_ssh"
   end
 
+  config.vm.network :forwarded_port, guest: 80, host: 8888
+  #config.vm.provision :shell, :path => "bootstrap.sh"
   config.vm.provision :puppet do |puppet|
   puppet.manifests_path = "puppet/manifests"
     puppet.module_path = "puppet/modules"
+    #puppet.manifest_file = "updatekernel-noproxy.pp"
+    #puppet.manifest_file = "updatekernel-proxy.pp" if !conf['http_proxy_host'].nil? && !conf['http_proxy_port'].nil? && !conf['http_proxy_host'].to_s.empty? && !conf['http_proxy_port'].to_s.empty?
     puppet.manifest_file = "vagrant-noproxy.pp"
     puppet.manifest_file = "vagrant-proxy.pp" if !conf['http_proxy_host'].nil? && !conf['http_proxy_port'].nil? && !conf['http_proxy_host'].to_s.empty? && !conf['http_proxy_port'].to_s.empty?
     puppet.options = ["--verbose", "--node_name_value", config.vm.hostname] 
@@ -76,5 +80,5 @@ Vagrant.configure("2") do |config|
         "no_proxy_domains" => conf['no_proxy_domains'],
         "vm_type" => "vagrant",
         }
-    end
+  end
 end
