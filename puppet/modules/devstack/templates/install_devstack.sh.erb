@@ -5,15 +5,24 @@
 # http://www.sebastien-han.fr/blog/2013/08/16/best-localrc-for-devstack/
 #
 . /etc/environment
+# Adding havana repo
+sudo apt-get install -y python-software-properties 
+sudo add-apt-repository -y cloud-archive:havana
+sudo apt-get update -y
+sudo apt-get -y dist-upgrade
+
+# start the devstack localrc configuration
 git clone https://github.com/openstack-dev/devstack.git -b <%= @devstack_branch %> devstack
 cd devstack
 # Build localrc
+# Misc
 echo ADMIN_PASSWORD=password > localrc
-echo MYSQL_PASSWORD=password >> localrc
+echo DATABASE_PASSWORD=password >> localrc
 echo RABBIT_PASSWORD=password >> localrc
 echo SERVICE_PASSWORD=password >> localrc
 echo SERVICE_TOKEN=tokentoken >> localrc
 
+# Repos
 echo CINDER_BRANCH=<%= @devstack_branch %> >> localrc
 echo GLANCE_BRANCH=<%= @devstack_branch %> >> localrc
 echo HORIZON_BRANCH=<%= @devstack_branch %> >> localrc
@@ -24,105 +33,105 @@ echo NEUTRON_BRANCH=<%= @devstack_branch %> >> localrc
 echo SWIFT_BRANCH=<%= @devstack_branch %> >> localrc
 echo HEAT_BRANCH=<%= @devstack_branch %> >> localrc
 echo CEILOMETER_BRANCH=<%= @devstack_branch %> >> localrc
+cat << EOF >> localrc 
+# Reclone each time
+RECLONE=yes
 
-#Enable Logging
-echo LOGFILE=/opt/stack/logs/stack.sh.log >> localrc
-echo VERBOSE=True >> localrc
-echo LOG_COLOR=False >> localrc
-echo SCREEN_LOGDIR=/opt/stack/logs >> localrc
+## For Keystone
+KEYSTONE_TOKEN_FORMAT=PKI
 
-# Disabled  services
-echo DISABLED_SERVICES+=,\
-n-net,\
-tempest\
->> localrc
+# For Swift
+SWIFT_REPLICAS=1
+SWIFT_HASH=011688b44136573e209e
 
-# Enabled services
-echo ENABLED_SERVICES+=,\
-c-api,\
-c-sch,\
-c-vol,\
-ceilometer-acentral,\
-ceilometer-acompute,\
-ceilometer-api,\
-ceilometer-collector,\
-cinder,\
-g-api,\
-g-reg,\
-h-api,\
-h-api-cfn,\
-h-api-cw,\
-h-eng,\
-heat,\
-horizon,\
-key,\
-mysql,\
-neutron,\
-n-api,\
-n-cauth,\
-n-cond,\
-n-cpu,\
-n-crt,\
-n-novnc,\
-n-obj,\
-n-sch,\
-n-xvnc,\
-q-agt,\
-q-dhcp,\
-q-l3,\
-q-lbaas,\
-q-meta,\
-q-svc,\
-quantum,\
-rabbit,\
-swift,\
-sysstat,\
-trove,\
-tr-api,\
-tr-tmgr,\
-tr-cond\
->> localrc
+disable_service n-net
 
-echo IMAGE_URLS+=,\
-http://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-uec.tar.gz,\
-http://fedorapeople.org/groups/heat/prebuilt-jeos-images/F18-i386-cfntools.qcow2, \
->> localrc
+# Enable Logging
+LOGFILE=/opt/stack/logs/stack.sh.log
+VERBOSE=True
+LOG_COLOR=True
+SCREEN_LOGDIR=/opt/stack/logs
 
+# Pre-requisite
+ENABLED_SERVICES=rabbit,mysql,key
 
-# Optionally alter HEAT_REPO to use a fork.
-# HEAT_REPO=https://github.com/sjcorbett/heat.git
-# HEAT_BRANCH=master
-#
-#echo "# Network configuration. HOST_IP should be the same as the IP you used" >> localrc
-#echo "# for the private network in your Vagrantfile. The combination of" >> localrc
-#echo "# FLAT_INTERFACE and PUBLIC_INTERFACE indicates that OpenStack should" >> localrc
-#echo "# bridge network traffic over ethX." >> localrc
+# If you want ZeroMQ instead of RabbitMQ (don't forget to un-declare 'rabbit' from the pre-requesite)
+# ENABLED_SERVICES+=,-rabbit,-qpid,zeromq
+
+# If you want Qpid instead of RabbitMQ (don't forget to un-declare 'rabbit' from the pre-requesite)
+# ENABLED_SERVICES+=,-rabbit,-zeromq,qpid
+
+# Horizon (Dashboard UI) - (always use the trunk)
+ENABLED_SERVICES+=,horizon
+
+# Nova - Compute Service
+ENABLED_SERVICES+=,n-api,n-crt,n-obj,n-cpu,n-cond,n-sch
+IMAGE_URLS+=",https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
+
+# Nova Network - If you don't want to use Neutron and need a simple network setup (old good stuff!)
+# ENABLED_SERVICES+=,n-net
+
+# Nova Cells
+# ENABLED_SERVICES+=,n-cell
+
+# Glance - Image Service
+ENABLED_SERVICES+=,g-api,g-reg
+
+# Swift - Object Storage
+ENABLED_SERVICES+=,s-proxy,s-object,s-container,s-account
+
+# Neutron - Networking Service
+# If Neutron is not declared the old good nova-network will be used
+ENABLED_SERVICES+=,q-svc,q-agt,q-dhcp,q-l3,q-meta,neutron
+
+# Neutron - Load Balancing
+ENABLED_SERVICES+=,q-lbaas
+
+# Neutron - VPN as a Service
+ENABLED_SERVICES+=,q-vpn
+
+# Neutron - Firewall as a Service
+ENABLED_SERVICES+=,q-fwaas
+
+# VLAN configuration
+Q_PLUGIN=ml2
+ENABLE_TENANT_VLANS=True
+
+# GRE tunnel configuration
+Q_PLUGIN=ml2
+ENABLE_TENANT_TUNNELS=True
+
+# VXLAN tunnel configuration
+Q_PLUGIN=ml2
+Q_ML2_TENANT_NETWORK_TYPE=vxlan   
+
+# Cinder - Block Device Service
+ENABLED_SERVICES+=,cinder,c-api,c-vol,c-sch,c-bak
+
+# Heat - Orchestration Service
+ENABLED_SERVICES+=,heat,h-api,h-api-cfn,h-api-cw,h-eng
+IMAGE_URLS+=",http://fedorapeople.org/groups/heat/prebuilt-jeos-images/F17-x86_64-cfntools.qcow2,http://cloud-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64-disk1.img"
+
+# Ceilometer - Metering Service (metering + alarming)
+ENABLED_SERVICES+=,ceilometer-acompute,ceilometer-acentral,ceilometer-collector,ceilometer-api
+ENABLED_SERVICES+=,ceilometer-alarm-notify,ceilometer-alarm-eval
+
+# Apache fronted for WSGI
+APACHE_ENABLED_SERVICES+=keystone,swift
+
+# Tempest
+ENABLED_SERVICES+=,tempest
+
+# Trove
+ENABLED_SERVICES+=,tr-api,tr-tmgr,tr-cond,trove
+
+EOF
 <% if has_variable?("ipaddress_eth1") %><% then %>
-echo HOST_IP=<%= @ipaddress_eth1 %> >> localrc
-echo FLOATING_RANGE=$(echo <%= @ipaddress_eth1 %> | cut -d'.' -f1-3).224/27 >> localrc
-echo PUBLIC_INTERFACE=eth1 >> localrc
 echo HOST_IP_IFACE=eth1 >> localrc
 <% else %>
-echo HOST_IP=<%= @ipaddress_eth0 %> >> localrc
-echo FLOATING_RANGE=$(echo <%= @ipaddress_eth0 %> | cut -d'.' -f1-3).224/27 >> localrc
-echo PUBLIC_INTERFACE=eth0 >> localrc
 echo HOST_IP_IFACE=eth0 >> localrc
 <% end %>
-#echo FLAT_INTERFACE=br100 >> localrc
-#echo SCHEDULER=nova.scheduler.simple.SimpleScheduler >> localrc
-#echo EXTRA_OPTS=\(scheduler_default_filters=AllHostsFilter\) >> localrc
 
-#echo OFFLINE=True >> localrc
-echo RECLONE=yes >> localrc
-echo VOLUME_BACKING_FILE_SIZE=5120M >> localrc
-
-#gre tunnels
-echo ENABLE_TENANT_TUNNELS=True >> localrc
-echo TENANT_TUNNEL_RANGES=1:1000 >> localrc
-echo OVS_ENABLE_TUNNELING=True >> localrc
-echo SWIFT_LOOPBACK_DISK_SIZE=10000000 >> localrc
-echo SWIFT_HASH=stack >> localrc
-#
 # Build vms-talk.sh script
 cat << EOS > $HOME/vms-talk.sh
 #!/bin/bash
