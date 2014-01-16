@@ -16,9 +16,12 @@ conf = {
     'socks_proxy_port' => nil,
     'ftp_proxy_host' => nil,
     'ftp_proxy_port' => nil,
-    'no_proxy_domains' => nil,
+    'no_proxy_domains' => '10.10.10.10,127.0.0.1,localhost,.mycompany.com,.mylocalnet.com',
     'host_ip'          => '10.10.10.10',
     'ssh_dir'          => '~/.ssh/',
+    'memory'           => 4096,
+    'http_port_map'    => 8888,
+    'ssh_port_map'     => 2022,
 }
 
 vd_conf = ENV.fetch('VD_CONF', 'etc/common.yaml')
@@ -28,8 +31,11 @@ if File.exist?(vd_conf)
     conf.update(user_conf)
 end
 
-host_ip    = conf['host_ip']
-ssh_dir    = conf['ssh_dir']
+host_ip        = conf['host_ip']
+ssh_dir        = conf['ssh_dir']
+memory         = conf['memory']
+http_port_map  = conf['http_port_map']
+ssh_port_map   = conf['ssh_port_map']
 
 Vagrant.configure("2") do |config|
   config.vm.hostname = "devstack.mylocalnet.com"
@@ -39,12 +45,12 @@ Vagrant.configure("2") do |config|
   config.vm.provider :vmware_fusion do |v, override|
     override.vm.box = "precise64_vmware"
     override.vm.box_url = "http://files.vagrantup.com/precise64_vmware.box"
-    v.vmx["memsize"] = "4096"
+    v.vmx["memsize"] = memory 
     v.vmx["numvcpus"] = "1"
   end
 
   config.vm.provider :virtualbox do |vb|
-    vb.customize ["modifyvm", :id, "--memory", 4096 ]
+    vb.customize ["modifyvm", :id, "--memory", memory ]
     vb.customize ["modifyvm", :id, "--cpus", 1 ]
     # If you don’t have a modern computer with CPU supporting hardware virtualization 
     # Uncomment next line (Be aware it will run much slower)
@@ -57,7 +63,8 @@ Vagrant.configure("2") do |config|
       config.vm.synced_folder ssh_dir, "/home/vagrant/.host_ssh"
   end
 
-  config.vm.network :forwarded_port, guest: 80, host: 8888
+  config.vm.network :forwarded_port, guest: 80, host: http_port_map
+  config.vm.network :forwarded_port, guest: 22, host: ssh_port_map
   #config.vm.provision :shell, :path => "bootstrap.sh"
   config.vm.provision :puppet do |puppet|
   puppet.manifests_path = "puppet/manifests"
