@@ -10,6 +10,7 @@ class updatekernel {
 
   group { "puppet": ensure => "present"; }  ->
 
-  class { "aptitude": require         => Exec['update apt'], } ->
-  package { $kernel_packages: ensure => installed }
+  class { "aptitude": require                          => Exec['update apt'], } ->
+  package { $kernel_packages: ensure                   => installed } ->
+  notify {"Restart of the system is required": }
 }

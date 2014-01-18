@@ -14,14 +14,16 @@ conf = {
     'https_proxy_port' => nil,
     'socks_proxy_host' => nil,
     'socks_proxy_port' => nil,
-    'ftp_proxy_host' => nil,
-    'ftp_proxy_port' => nil,
-    'no_proxy_domains' => '10.10.10.10,127.0.0.1,localhost,.mycompany.com,.mylocalnet.com',
-    'host_ip'          => '10.10.10.10',
+    'ftp_proxy_host'   => nil,
+    'ftp_proxy_port'   => nil,
+    'host_ip'          => "10.10.10.10",
+    'no_proxy_domains' => ".mycompany.com,.mylocalnet.com",
     'ssh_dir'          => '~/.ssh/',
     'memory'           => 4096,
     'http_port_map'    => 8888,
     'ssh_port_map'     => 2022,
+    'install_devstack' => true,
+    'devstack_branch'  => 'master',
 }
 
 vd_conf = ENV.fetch('VD_CONF', 'etc/common.yaml')
@@ -58,7 +60,7 @@ Vagrant.configure("2") do |config|
   end
   config.vm.network :private_network, ip: host_ip
   #config.vm.boot_mode='gui'
-  
+
   if !Kernel.is_windows?
       config.vm.synced_folder ssh_dir, "/home/vagrant/.host_ssh"
   end
@@ -69,10 +71,8 @@ Vagrant.configure("2") do |config|
   config.vm.provision :puppet do |puppet|
   puppet.manifests_path = "puppet/manifests"
     puppet.module_path = "puppet/modules"
-    #puppet.manifest_file = "updatekernel-noproxy.pp"
-    #puppet.manifest_file = "updatekernel-proxy.pp" if !conf['http_proxy_host'].nil? && !conf['http_proxy_port'].nil? && !conf['http_proxy_host'].to_s.empty? && !conf['http_proxy_port'].to_s.empty?
-    puppet.manifest_file = "vagrant-noproxy.pp"
-    puppet.manifest_file = "vagrant-proxy.pp" if !conf['http_proxy_host'].nil? && !conf['http_proxy_port'].nil? && !conf['http_proxy_host'].to_s.empty? && !conf['http_proxy_port'].to_s.empty?
+    #puppet.manifest_file = "updatekernel.pp"
+    puppet.manifest_file = "vagrant.pp"
     puppet.options = ["--verbose", "--node_name_value", config.vm.hostname] 
     puppet.options = puppet.options + ["--http_proxy_host", conf['http_proxy_host'], "--http_proxy_port", conf['http_proxy_port']] if !conf['http_proxy_host'].nil? && !conf['http_proxy_port'].nil? && !conf['http_proxy_host'].to_s.empty? && !conf['http_proxy_port'].to_s.empty?
     puppet.facter = {
@@ -86,6 +86,8 @@ Vagrant.configure("2") do |config|
         "ftp_proxy_port" => conf['ftp_proxy_port'],
         "no_proxy_domains" => conf['no_proxy_domains'],
         "vm_type" => "vagrant",
+        "install_devstack" => conf['install_devstack'], 
+        "devstack_branch"  => conf['devstack_branch'],
         }
   end
 end
