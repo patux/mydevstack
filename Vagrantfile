@@ -26,6 +26,7 @@ conf = {
     'devstack_branch'  => 'master',
 }
 
+
 vd_conf = ENV.fetch('VD_CONF', 'etc/common.yaml')
 if File.exist?(vd_conf)
     require 'yaml'
@@ -43,6 +44,13 @@ Vagrant.configure("2") do |config|
   config.vm.hostname = "devstack.mylocalnet.com"
   config.vm.box = "precise64"
   config.vm.box_url = "http://files.vagrantup.com/precise64.box"
+
+  if Vagrant.has_plugin?("vagrant-proxyconf")
+      config.proxy.http     = "#{conf['http_proxy_host']}:#{conf['http_proxy_port']}"
+      config.proxy.https    = "#{conf['https_proxy_host']}:#{conf['https_proxy_port']}"
+      config.proxy.no_proxy = conf['no_proxy_domains']
+      config.apt_proxy.http = "#{conf['http_proxy_host']}:#{conf['http_proxy_port']}"
+  end
 
   config.vm.provider :vmware_fusion do |v, override|
     override.vm.box = "precise64_vmware"
