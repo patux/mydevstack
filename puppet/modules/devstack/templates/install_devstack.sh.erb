@@ -14,25 +14,26 @@ sudo apt-get -y dist-upgrade
 # start the devstack localrc configuration
 git clone https://github.com/openstack-dev/devstack.git -b <%= @devstack_branch %> devstack
 cd devstack
-# Build localrc
-# Misc
-echo ADMIN_PASSWORD=password > localrc
-echo DATABASE_PASSWORD=password >> localrc
+git checkout <%= @devstack_branch %>
+echo DATABASE_PASSWORD=password > localrc
 echo RABBIT_PASSWORD=password >> localrc
+echo SERVICE_TOKEN=password >> localrc
 echo SERVICE_PASSWORD=password >> localrc
-echo SERVICE_TOKEN=tokentoken >> localrc
-
-# Repos
-echo CINDER_BRANCH=<%= @devstack_branch %> >> localrc
-echo GLANCE_BRANCH=<%= @devstack_branch %> >> localrc
-echo HORIZON_BRANCH=<%= @devstack_branch %> >> localrc
-echo KEYSTONE_BRANCH=<%= @devstack_branch %> >> localrc
-echo NOVA_BRANCH=<%= @devstack_branch %> >> localrc
-echo QUANTUM_BRANCH=<%= @devstack_branch %> >> localrc
-echo NEUTRON_BRANCH=<%= @devstack_branch %> >> localrc
-echo SWIFT_BRANCH=<%= @devstack_branch %> >> localrc
-echo HEAT_BRANCH=<%= @devstack_branch %> >> localrc
-echo CEILOMETER_BRANCH=<%= @devstack_branch %> >> localrc
+echo ADMIN_PASSWORD=password >> localrc
+echo LOGFILE=/home/stack/stack.sh.log >> localrc
+echo >> localrc 
+echo disable_service n-net >> localrc
+echo enable_service q-svc >> localrc
+echo enable_service q-agt >> localrc
+echo enable_service q-dhcp >> localrc
+echo enable_service q-l3 >> localrc
+echo enable_service q-meta >> localrc
+echo enable_service neutron >> localrc
+echo enable_service n-novnc >> localrc
+echo enable_service n-xvnc >> localrc
+echo enable_service n-cauth >> localrc
+# Optional, to enable tempest configuration as part of devstack
+echo  enable_service tempest >> localrc
 cat << EOF >> localrc 
 # Reclone each time
 RECLONE=yes
@@ -40,96 +41,32 @@ RECLONE=yes
 ## For Keystone
 KEYSTONE_TOKEN_FORMAT=PKI
 
-# For Swift
-SWIFT_REPLICAS=1
-SWIFT_HASH=011688b44136573e209e
-
-disable_service n-net
-
 # Enable Logging
-LOGFILE=/opt/stack/logs/stack.sh.log
 VERBOSE=True
 LOG_COLOR=True
 SCREEN_LOGDIR=/opt/stack/logs
 
-# Pre-requisite
-ENABLED_SERVICES=rabbit,mysql,key
-
-# If you want ZeroMQ instead of RabbitMQ (don't forget to un-declare 'rabbit' from the pre-requesite)
-# ENABLED_SERVICES+=,-rabbit,-qpid,zeromq
-
-# If you want Qpid instead of RabbitMQ (don't forget to un-declare 'rabbit' from the pre-requesite)
-# ENABLED_SERVICES+=,-rabbit,-zeromq,qpid
-
 # Horizon (Dashboard UI) - (always use the trunk)
 ENABLED_SERVICES+=,horizon
 
-# Nova - Compute Service
-ENABLED_SERVICES+=,n-api,n-crt,n-obj,n-cpu,n-cond,n-sch
 IMAGE_URLS+=",https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
-
-# Nova Network - If you don't want to use Neutron and need a simple network setup (old good stuff!)
-# ENABLED_SERVICES+=,n-net
-
-# Nova Cells
-# ENABLED_SERVICES+=,n-cell
-
-# Glance - Image Service
-ENABLED_SERVICES+=,g-api,g-reg
-
-# Swift - Object Storage
-ENABLED_SERVICES+=,s-proxy,s-object,s-container,s-account
-
-# Neutron - Networking Service
-# If Neutron is not declared the old good nova-network will be used
-ENABLED_SERVICES+=,q-svc,q-agt,q-dhcp,q-l3,q-meta,neutron
-
-# Neutron - Load Balancing
-ENABLED_SERVICES+=,q-lbaas
-
-# Neutron - VPN as a Service
-ENABLED_SERVICES+=,q-vpn
-
-# Neutron - Firewall as a Service
-ENABLED_SERVICES+=,q-fwaas
-
-# VLAN configuration
-Q_PLUGIN=ml2
-ENABLE_TENANT_VLANS=True
-
-# GRE tunnel configuration
-Q_PLUGIN=ml2
-ENABLE_TENANT_TUNNELS=True
-
-# VXLAN tunnel configuration
-Q_PLUGIN=ml2
-Q_ML2_TENANT_NETWORK_TYPE=vxlan   
-
-# Cinder - Block Device Service
-ENABLED_SERVICES+=,cinder,c-api,c-vol,c-sch,c-bak
-
-# Heat - Orchestration Service
-ENABLED_SERVICES+=,heat,h-api,h-api-cfn,h-api-cw,h-eng
 IMAGE_URLS+=",http://fedorapeople.org/groups/heat/prebuilt-jeos-images/F17-x86_64-cfntools.qcow2,http://cloud-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64-disk1.img"
-
-# Ceilometer - Metering Service (metering + alarming)
-ENABLED_SERVICES+=,ceilometer-acompute,ceilometer-acentral,ceilometer-collector,ceilometer-api
-ENABLED_SERVICES+=,ceilometer-alarm-notify,ceilometer-alarm-eval
-
-# Apache fronted for WSGI
-APACHE_ENABLED_SERVICES+=keystone,swift
-
-# Tempest
-ENABLED_SERVICES+=,tempest
-
-# Trove
-ENABLED_SERVICES+=,tr-api,tr-tmgr,tr-cond,trove
 
 EOF
 <% if has_variable?("ipaddress_eth1") %><% then %>
+echo FLOATING_RANGE=<%= @network_eth1 %>/27 >> localrc
+echo HOST_IP=<%= @ipaddress_eth1 %>  >> localrc
+echo FLAT_INTERFACE=br100 >>localrc
 echo HOST_IP_IFACE=eth1 >> localrc
+echo PUBLIC_INTERFACE=eth1 >> localrc
+echo Q_FLOATING_ALLOCATION_POOL=start=10.10.10.10,end=10.10.10.20 >> localrc
 <% else %>
-echo HOST_IP_IFACE=eth0 >> localrc
+echo FLOATING_RANGE=<%= @network_eth0 %>/27 >> localrc
+echo HOST_IP=<%= @ipaddress_eth0 %>  >> localrc
+echo FLAT_INTERFACE=br100 >>localrc
+echo HOST_IP_IFACE=eth1 >> localrc
+echo PUBLIC_INTERFACE=eth0 >> localrc
+echo Q_FLOATING_ALLOCATION_POOL=start=10.10.10.10,end=10.10.10.20 >> localrc
 <% end %>
 
 # Build vms-talk.sh script

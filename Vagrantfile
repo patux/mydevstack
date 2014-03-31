@@ -26,7 +26,6 @@ conf = {
     'devstack_branch'  => 'master',
 }
 
-
 vd_conf = ENV.fetch('VD_CONF', 'etc/common.yaml')
 if File.exist?(vd_conf)
     require 'yaml'
