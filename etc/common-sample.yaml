@@ -8,7 +8,7 @@ socks_proxy_host: "socks://10.20.30.40"
 socks_proxy_port: "1080"
 ftp_proxy_host: "ftp://10.20.30.40" 
 ftp_proxy_port: "2121"
-host_ip: '10.10.10.10'
+host_ip: '10.10.10.5'
 no_proxy_domains: ".mycompany.com,.mylocalnet.com"
 ssh_dir: '~/.ssh/'
 memory: 4096
