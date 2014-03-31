@@ -25,6 +25,41 @@ Ddefault is **master**
 
     $ vagrant up 
 
+### Base environment
+
+    $ git checkout master
+
+Enabled services:
+  * nova
+  * glance
+  * neutron
+  * cinder
+  * keystone
+  * horizon
+  * tempest
+
+### Complex environment
+
+You will need 8GB at least for your devstack environment
+
+    $ git checkout complex
+
+Enabled services:
+  * nova
+  * glance
+  * neutron
+  * cinder
+  * keystone
+  * horizon
+  * tempest
+  * swift
+  * lbaas
+  * fwass
+  * vpnaas
+  * gre tunnels
+  * ceilometer
+  * trove
+
 ## Contribute for Openstack
 
 https://wiki.openstack.org/wiki/How_To_Contribute
