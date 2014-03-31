@@ -16,8 +16,8 @@ conf = {
     'socks_proxy_port' => nil,
     'ftp_proxy_host'   => nil,
     'ftp_proxy_port'   => nil,
-    'host_ip'          => "10.10.10.10",
-    'no_proxy_domains' => ".mycompany.com,.mylocalnet.com",
+    'host_ip'          => "10.10.10.5",
+    'no_proxy_domains' => ".mylocalnet.com",
     'ssh_dir'          => '~/.ssh/',
     'memory'           => 4096,
     'http_port_map'    => 8888,
@@ -55,12 +55,12 @@ Vagrant.configure("2") do |config|
     override.vm.box = "precise64_vmware"
     override.vm.box_url = "http://files.vagrantup.com/precise64_vmware.box"
     v.vmx["memsize"] = memory 
-    v.vmx["numvcpus"] = "1"
+    v.vmx["numvcpus"] = "2"
   end
 
   config.vm.provider :virtualbox do |vb|
     vb.customize ["modifyvm", :id, "--memory", memory ]
-    vb.customize ["modifyvm", :id, "--cpus", 1 ]
+    vb.customize ["modifyvm", :id, "--cpus", 2 ]
     # If you don’t have a modern computer with CPU supporting hardware virtualization 
     # Uncomment next line (Be aware it will run much slower)
     # vb.customize ["modifyvm", :id, “–hwvirtex”, “off”]
