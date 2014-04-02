@@ -54,19 +54,17 @@ IMAGE_URLS+=",http://fedorapeople.org/groups/heat/prebuilt-jeos-images/F17-x86_6
 
 EOF
 <% if has_variable?("ipaddress_eth1") %><% then %>
-echo FLOATING_RANGE=<%= @network_eth1 %>/27 >> localrc
-echo HOST_IP=<%= @ipaddress_eth1 %>  >> localrc
-echo FLAT_INTERFACE=br100 >>localrc
-echo HOST_IP_IFACE=eth1 >> localrc
-echo PUBLIC_INTERFACE=eth1 >> localrc
-echo Q_FLOATING_ALLOCATION_POOL=start=10.10.10.10,end=10.10.10.20 >> localrc
+    echo HOST_IP=<%= @ipaddress_eth1 %> >> localrc
+    echo NETWORK_GATEWAY=<%= @network_eth1 %>.1 | cut -d'.' -f1-3,5 >> localrc
+    echo FLOATING_RANGE=<%= @network_eth1 %>.64/26 | cut -d'.' -f1-3,5 >> localrc
+    echo FIXED_RANGE=<%= @network_eth1 %>.128/25 | cut -d'.' -f1-3,5 >> localrc
+    echo FIXED_NETWORK_SIZE=128 >> localrc
 <% else %>
-echo FLOATING_RANGE=<%= @network_eth0 %>/27 >> localrc
-echo HOST_IP=<%= @ipaddress_eth0 %>  >> localrc
-echo FLAT_INTERFACE=br100 >>localrc
-echo HOST_IP_IFACE=eth1 >> localrc
-echo PUBLIC_INTERFACE=eth0 >> localrc
-echo Q_FLOATING_ALLOCATION_POOL=start=10.10.10.10,end=10.10.10.20 >> localrc
+    echo HOST_IP=<%= @ipaddress_eth1 %> >> localrc
+    echo NETWORK_GATEWAY=<%= @network_eth1 %>.1 | cut -d'.' -f1-3,5 >> localrc
+    echo FLOATING_RANGE=<%= @network_eth1 %>.64/26 | cut -d'.' -f1-3,5 >> localrc
+    echo FIXED_RANGE=<%= @network_eth1 %>.128/25 | cut -d'.' -f1-3,5 >> localrc
+    echo FIXED_NETWORK_SIZE=128 >> localrc
 <% end %>
 
 # Build vms-talk.sh script
