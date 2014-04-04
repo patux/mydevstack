@@ -45,6 +45,8 @@ KEYSTONE_TOKEN_FORMAT=PKI
 VERBOSE=True
 LOG_COLOR=True
 SCREEN_LOGDIR=/opt/stack/logs
+LOGFILE=/opt/stack/stack.sh.log
+LOGDAYS=2
 
 # Horizon (Dashboard UI) - (always use the trunk)
 ENABLED_SERVICES+=,horizon
@@ -55,21 +57,38 @@ IMAGE_URLS+=",http://fedorapeople.org/groups/heat/prebuilt-jeos-images/F17-x86_6
 EOF
 <% if has_variable?("ipaddress_eth1") %><% then %>
     echo HOST_IP=<%= @ipaddress_eth1 %> >> localrc
-    echo NETWORK_GATEWAY=<%= @network_eth1 %>.1 | cut -d'.' -f1-3,5 >> localrc
-    echo FLOATING_RANGE=<%= @network_eth1 %>.64/26 | cut -d'.' -f1-3,5 >> localrc
-    echo FIXED_RANGE=<%= @network_eth1 %>.128/25 | cut -d'.' -f1-3,5 >> localrc
-    echo FIXED_NETWORK_SIZE=128 >> localrc
+    FLAT_INTERFACE=eth1
 <% else %>
     echo HOST_IP=<%= @ipaddress_eth1 %> >> localrc
-    echo NETWORK_GATEWAY=<%= @network_eth1 %>.1 | cut -d'.' -f1-3,5 >> localrc
-    echo FLOATING_RANGE=<%= @network_eth1 %>.64/26 | cut -d'.' -f1-3,5 >> localrc
-    echo FIXED_RANGE=<%= @network_eth1 %>.128/25 | cut -d'.' -f1-3,5 >> localrc
-    echo FIXED_NETWORK_SIZE=128 >> localrc
+    FLAT_INTERFACE=eth0
 <% end %>
 
-# Build vms-talk.sh script
-cat << EOS > $HOME/vms-talk.sh
+# Build local.sh script
+cat << EOS > $HOME/devstack/local.sh
 #!/bin/bash
+set -o xtrace
+
+echo "Running local.sh"
+
+openrc=/home/vagrant/devstack/openrc
+source $openrc
+
+if is_service_enabled n-api; then
+    for user in admin demo; do
+        source $openrc $user $user
+        nova keypair-add --pub-key /home/vagrant/.host_ssh/id_rsa.pub
+        nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
+        nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
+    done
+fi
+elif is_service_enabled neutron; then
+    for user in admin demo; do
+        source $openrc $user $user
+        nova keypair-add --pub-key /home/vagrant/.host_ssh/id_rsa.pub
+        neutron security-group-rule-create --protocol icmp --direction ingress default
+        neutron security-group-rule-create --protocol tcp --port-range-min 22 --port-range-max 22 --direction ingress default
+    done
+fi
 # Allowing guests in DevStack to talk to outside world 
 # https://ask.openstack.org/en/question/1830/allowing-guests-in-devstack-to-talk-to-outside-world/
 /sbin/iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
@@ -92,7 +111,5 @@ EOF
 chmod +x /etc/network/if-post-down.d/iptablessave
 chmod +x /etc/network/if-pre-up.d/iptablesload
 EOS
-chmod +x $HOME/vms-talk.sh
 
 ./stack.sh
-
