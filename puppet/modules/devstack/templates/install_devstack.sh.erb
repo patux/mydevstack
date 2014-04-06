@@ -1,8 +1,8 @@
 #!/bin/bash
-# Base template to create a localrc to bulid devstack
+# Base template to create a local.conf to bulid devstack
 #
-# A reference for a good localrc here:
-# http://www.sebastien-han.fr/blog/2013/08/16/best-localrc-for-devstack/
+# A reference for a good local.conf here:
+# http://www.sebastien-han.fr/blog/2013/08/16/best-local.conf-for-devstack/
 #
 . /etc/environment
 # Adding havana repo
@@ -11,31 +11,35 @@ sudo add-apt-repository -y cloud-archive:havana
 sudo apt-get update -y
 sudo apt-get -y dist-upgrade
 
-# start the devstack localrc configuration
+# start the devstack local.conf configuration
 git clone https://github.com/openstack-dev/devstack.git -b <%= @devstack_branch %> devstack
 cd devstack
 git checkout <%= @devstack_branch %>
-echo DATABASE_PASSWORD=password > localrc
-echo RABBIT_PASSWORD=password >> localrc
-echo SERVICE_TOKEN=password >> localrc
-echo SERVICE_PASSWORD=password >> localrc
-echo ADMIN_PASSWORD=password >> localrc
-echo LOGFILE=/opt/stack/stack.sh.log >> localrc
-echo >> localrc 
-echo disable_service n-net >> localrc
-echo enable_service q-svc >> localrc
-echo enable_service q-agt >> localrc
-echo enable_service q-dhcp >> localrc
-echo enable_service q-l3 >> localrc
-echo enable_service q-meta >> localrc
-echo enable_service neutron >> localrc
-echo enable_service n-novnc >> localrc
-echo enable_service n-xvnc >> localrc
-echo enable_service n-cauth >> localrc
+# Build local.conf
+# Misc
+echo [[local\|local.conf]] > local.conf
+echo DATABASE_PASSWORD=password > local.conf
+echo RABBIT_PASSWORD=password >> local.conf
+echo SERVICE_TOKEN=password >> local.conf
+echo SERVICE_PASSWORD=password >> local.conf
+echo ADMIN_PASSWORD=password >> local.conf
+echo LOGFILE=/opt/stack/stack.sh.log >> local.conf
+echo >> local.conf 
+echo disable_service n-net >> local.conf
+echo enable_service q-svc >> local.conf
+echo enable_service q-agt >> local.conf
+echo enable_service q-dhcp >> local.conf
+echo enable_service q-l3 >> local.conf
+echo enable_service q-meta >> local.conf
+echo enable_service neutron >> local.conf
+echo enable_service n-novnc >> local.conf
+echo enable_service n-xvnc >> local.conf
+echo enable_service n-cauth >> local.conf
 # Optional, to enable tempest configuration as part of devstack
-echo  enable_service tempest >> localrc
-cat << EOF >> localrc 
+echo  enable_service tempest >> local.conf
+cat << EOF >> local.conf 
 # Reclone each time
+IMAGE_URLS+=",https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
 RECLONE=yes
 
 ## For Keystone
@@ -56,10 +60,10 @@ IMAGE_URLS+=",http://fedorapeople.org/groups/heat/prebuilt-jeos-images/F17-x86_6
 
 EOF
 <% if has_variable?("ipaddress_eth1") %><% then %>
-    echo HOST_IP=<%= @ipaddress_eth1 %> >> localrc
+    echo HOST_IP=<%= @ipaddress_eth1 %> >> local.conf
     FLAT_INTERFACE=eth1
 <% else %>
-    echo HOST_IP=<%= @ipaddress_eth1 %> >> localrc
+    echo HOST_IP=<%= @ipaddress_eth1 %> >> local.conf
     FLAT_INTERFACE=eth0
 <% end %>
 
@@ -71,11 +75,10 @@ set -o xtrace
 echo "Running local.sh"
 
 openrc=/home/vagrant/devstack/openrc
-source $openrc
 
 if is_service_enabled n-api; then
     for user in admin demo; do
-        source $openrc $user $user
+        source \$openrc \$user \$user
         nova keypair-add --pub-key /home/vagrant/.host_ssh/id_rsa.pub
         nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
         nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
@@ -83,7 +86,7 @@ if is_service_enabled n-api; then
 fi
 elif is_service_enabled neutron; then
     for user in admin demo; do
-        source $openrc $user $user
+        source \$openrc \$user \$user
         nova keypair-add --pub-key /home/vagrant/.host_ssh/id_rsa.pub
         neutron security-group-rule-create --protocol icmp --direction ingress default
         neutron security-group-rule-create --protocol tcp --port-range-min 22 --port-range-max 22 --direction ingress default

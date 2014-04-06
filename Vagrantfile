@@ -55,12 +55,12 @@ Vagrant.configure("2") do |config|
     override.vm.box = "precise64_vmware"
     override.vm.box_url = "http://files.vagrantup.com/precise64_vmware.box"
     v.vmx["memsize"] = memory 
-    v.vmx["numvcpus"] = "2"
+    v.vmx["numvcpus"] = "4"
   end
 
   config.vm.provider :virtualbox do |vb|
     vb.customize ["modifyvm", :id, "--memory", memory ]
-    vb.customize ["modifyvm", :id, "--cpus", 2 ]
+    vb.customize ["modifyvm", :id, "--cpus", 4 ]
     # If you don’t have a modern computer with CPU supporting hardware virtualization 
     # Uncomment next line (Be aware it will run much slower)
     # vb.customize ["modifyvm", :id, “–hwvirtex”, “off”]
