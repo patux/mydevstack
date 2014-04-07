@@ -121,4 +121,9 @@ chmod +x /etc/network/if-post-down.d/iptablessave
 chmod +x /etc/network/if-pre-up.d/iptablesload
 EOS
 
+# Detect if we have the images already in vagrant sync folder
+[ -f /vagrant/cirros-0.3.2-x86_64-disk.img ] && cp /vagrant/cirros-0.3.2-x86_64-disk.img /home/vagrant/devstack/files/ 
+[ -f /vagrant/F17-x86_64-cfntools.qcow2 ] && cp /vagrant/F17-x86_64-cfntools.qcow2 /home/vagrant/devstack/files
+[ -f /vagrant/precise-server-cloudimg-amd64-disk1.img ] && cp /vagrant/precise-server-cloudimg-amd64-disk1.img /home/vagrant/devstack/files
+
 ./stack.sh
