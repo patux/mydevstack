@@ -1,8 +1,8 @@
 #!/bin/bash
-# Base template to create a <%= devstack_conf_file %> to bulid devstack
+# Base template to create a localrc or local.conf to bulid devstack
 #
-# A reference for a good <%= devstack_conf_file %> here:
-# http://www.sebastien-han.fr/blog/2013/08/16/best-<%= devstack_conf_file %>-for-devstack/
+# A reference for a good localrc here:
+# http://www.sebastien-han.fr/blog/2013/08/16/best-localrc-for-devstack/
 #
 . /etc/environment
 # Adding havana repo
@@ -11,13 +11,12 @@ sudo add-apt-repository -y cloud-archive:havana
 sudo apt-get update -y
 sudo apt-get -y dist-upgrade
 
-# start the devstack <%= devstack_conf_file %> configuration
 git clone https://github.com/openstack-dev/devstack.git -b <%= @devstack_branch %> devstack
 cd devstack
 git checkout <%= @devstack_branch %>
 <% if @devstack_branch == "master" or @devstack_branch == "stable/icehouse" %>
     <% devstack_conf_file = "local.conf" %>
-    echo [[local\|<%= devstack_conf_file %>]] > <%= devstack_conf_file %>
+    echo [[local\|localrc]] > <%= devstack_conf_file %>
 <% else %>
     <% devstack_conf_file = "localrc" %>
 <% end %>
@@ -29,8 +28,8 @@ echo RABBIT_PASSWORD=password >> <%= devstack_conf_file %>
 echo SERVICE_TOKEN=password >> <%= devstack_conf_file %>
 echo SERVICE_PASSWORD=password >> <%= devstack_conf_file %>
 echo ADMIN_PASSWORD=password >> <%= devstack_conf_file %>
-echo LOGFILE=/opt/stack/stack.sh.log >> <%= devstack_conf_file %>
 echo >> <%= devstack_conf_file %> 
+echo LOGFILE=/opt/stack/stack.sh.log >> <%= devstack_conf_file %>
 echo disable_service n-net >> <%= devstack_conf_file %>
 echo enable_service q-svc >> <%= devstack_conf_file %>
 echo enable_service q-agt >> <%= devstack_conf_file %>
