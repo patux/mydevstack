@@ -1,16 +1,16 @@
-class devstack ($devstack_branch = "master") {
-  file {"/home/vagrant/install_devstack.sh":
-    owner => vagrant,
-    group => vagrant,
+class devstack ($devstack_branch = "master", $stackuser = "stack") {
+  file {"/home/$stackuser/install_devstack.sh":
+    owner => $stackuser,
+    group => $stackuser,
     mode => '0740',
     replace => false,
     content => template('devstack/install_devstack.sh.erb'),
   } ~>
-  exec { "su - vagrant -c '/home/vagrant/install_devstack.sh | tee -a /tmp/devstack_install.log&'":
+  exec { "su - $stackuser -c '/home/$stackuser/install_devstack.sh | tee -a /tmp/devstack_install.log&'":
     provider => shell,
-    cwd => "/home/vagrant/",
-    #user => vagrant,
-    #group => vagrant,
+    cwd => "/home/$stackuser/",
+    #user => $stackuser,
+    #group => $stackuser,
     refreshonly => true,   
     timeout   => 0,
     logoutput => true,

@@ -22,6 +22,23 @@ git checkout <%= @devstack_branch %>
     <% devstack_conf_file = "localrc" %>
 <% end %>
 # Detect if we already have the images in vagrant shared folder
+<% if @vm_type == "vagrant" %>
+# copy keys if they exists
+if [ -f /home/vagrant/.host_ssh/id_rsa.pub ]; then
+    cp  /home/vagrant/.host_ssh/id_rsa.pub /home/vagrant/.ssh/
+    chown <%= @stackuser %>:<%= @stackuser %> /home/<%= @stackuser %>/.ssh/id_rsa.pub
+    chmod 644 /home/<%= @stackuser %>/.ssh/id_rsa.pub
+fi
+if [ -f /home/vagrant/.host_ssh/id_rsa ]; then
+    cp  /home/vagrant/.host_ssh/id_rsa /home/vagrant/.ssh/
+    chown <%= @stackuser %>:<%= @stackuser %> /home/<%= @stackuser %>/.ssh/id_rsa
+    chmod 600 /home/<%= @stackuser %>/.ssh/id_rsa
+fi
+# copy images if they exists
+[ -f /vagrant/cirros-0.3.2-x86_64-disk.img ] && cp /vagrant/cirros-0.3.2-x86_64-disk.img /home/vagrant/devstack/files/ 
+[ -f /vagrant/F17-x86_64-cfntools.qcow2 ] && cp /vagrant/F17-x86_64-cfntools.qcow2 /home/vagrant/devstack/files
+[ -f /vagrant/precise-server-cloudimg-amd64-disk1.img ] && cp /vagrant/precise-server-cloudimg-amd64-disk1.img /home/vagrant/devstack/files
+<% end %>
 # Build <%= devstack_conf_file %>
 # Misc
 echo DATABASE_PASSWORD=password >> <%= devstack_conf_file %>
@@ -42,6 +59,7 @@ echo enable_service neutron >> <%= devstack_conf_file %>
 echo enable_service n-novnc >> <%= devstack_conf_file %>
 echo enable_service n-xvnc >> <%= devstack_conf_file %>
 echo enable_service n-cauth >> <%= devstack_conf_file %>
+echo enable_service dstat >> <%= devstack_conf_file %>
 # Optional, to enable tempest configuration as part of devstack
 echo  enable_service tempest >> <%= devstack_conf_file %>
 cat << EOF >> <%= devstack_conf_file %> 
@@ -70,7 +88,7 @@ EOF
     echo HOST_IP=<%= @ipaddress_eth1 %> >> <%= devstack_conf_file %>
     FLAT_INTERFACE=eth1
 <% else %>
-    echo HOST_IP=<%= @ipaddress_eth1 %> >> <%= devstack_conf_file %>
+    echo HOST_IP=<%= @ipaddress_eth0 %> >> <%= devstack_conf_file %>
     FLAT_INTERFACE=eth0
 <% end %>
 
@@ -81,21 +99,26 @@ set -o xtrace
 
 echo "Running local.sh"
 
-openrc=/home/vagrant/devstack/openrc
+openrc=/home/<%= @stackuser %>/devstack/openrc
+source functions
 
-if is_service_enabled n-api; then
+if  is_service_enabled n-api || is_service_enabled neutron; then
     for user in admin demo; do
         source \$openrc \$user \$user
-        nova keypair-add --pub-key /home/vagrant/.host_ssh/id_rsa.pub
-        nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
-        nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
-    done
-elif is_service_enabled neutron; then
-    for user in admin demo; do
-        source \$openrc \$user \$user
-        nova keypair-add --pub-key /home/vagrant/.host_ssh/id_rsa.pub
-        neutron security-group-rule-create --protocol icmp --direction ingress default
-        neutron security-group-rule-create --protocol tcp --port-range-min 22 --port-range-max 22 --direction ingress default
+        <% if @vm_type != "vagrant" %> 
+        nova keypair-add \$user > /home/<%= @stackuser %>/.ssh/\$user.pem 
+        chown <%= @stackuser %>:<%= @stackuser %> /home/<%= @stackuser %>/.ssh/\$user.pem
+        chmod 600 /home/<%= @stackuser %>/.ssh/\$user.pem
+        <% else %>
+        nova keypair-add --pub-key /home/<%= @stackuser %>/.ssh/id_rsa.pub mykey
+        <% end %>
+        if is_service_enabled n-api; then 
+            nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
+            nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
+        elif is_service_enabled neutron; then
+            neutron security-group-rule-create --protocol icmp --direction ingress default
+            neutron security-group-rule-create --protocol tcp --port-range-min 22 --port-range-max 22 --direction ingress default
+        fi
     done
 fi
 # Allowing guests in DevStack to talk to outside world 
@@ -120,11 +143,6 @@ EOF
 chmod +x /etc/network/if-post-down.d/iptablessave
 chmod +x /etc/network/if-pre-up.d/iptablesload
 EOS
-chmod +x /home/vagrant/devstack/local.sh
-
-# Detect if we have the images already in vagrant sync folder
-[ -f /vagrant/cirros-0.3.2-x86_64-disk.img ] && cp /vagrant/cirros-0.3.2-x86_64-disk.img /home/vagrant/devstack/files/ 
-[ -f /vagrant/F17-x86_64-cfntools.qcow2 ] && cp /vagrant/F17-x86_64-cfntools.qcow2 /home/vagrant/devstack/files
-[ -f /vagrant/precise-server-cloudimg-amd64-disk1.img ] && cp /vagrant/precise-server-cloudimg-amd64-disk1.img /home/vagrant/devstack/files
+chmod +x /home/<%= @stackuser %>/devstack/local.sh
 
 ./stack.sh

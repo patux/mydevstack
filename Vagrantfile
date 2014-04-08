@@ -24,6 +24,7 @@ conf = {
     'ssh_port_map'     => 2022,
     'install_devstack' => true,
     'devstack_branch'  => 'master',
+    'stackuser'       => 'vagrant',
 }
 
 vd_conf = ENV.fetch('VD_CONF', 'etc/common.yaml')
@@ -95,6 +96,7 @@ Vagrant.configure("2") do |config|
         "vm_type" => "vagrant",
         "install_devstack" => conf['install_devstack'], 
         "devstack_branch"  => conf['devstack_branch'],
+        "stackuser"  => conf['stackuser'],
         }
   end
 end
