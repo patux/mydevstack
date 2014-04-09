@@ -64,7 +64,7 @@ ENABLED_SERVICES+=,horizon
 
 IMAGE_URLS+=",https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
 IMAGE_URLS+=",http://fedorapeople.org/groups/heat/prebuilt-jeos-images/F17-x86_64-cfntools.qcow2,http://cloud-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64-disk1.img"
-
+ 
 EOF
 <% if has_variable?("ipaddress_eth1") %><% then %>
     echo HOST_IP=<%= @ipaddress_eth1 %> >> <%= devstack_conf_file %>
@@ -90,7 +90,6 @@ if is_service_enabled n-api; then
         nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
         nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
     done
-fi
 elif is_service_enabled neutron; then
     for user in admin demo; do
         source \$openrc \$user \$user
