@@ -28,21 +28,28 @@ node basenode {
 
 node default inherits basenode {
 
-    if $::stackuser != "nil" {
-        $stackuser = $::stackuser
-    }
-    else {
-        $stackuser = "stack" 
-    }
-
-    file_line { 'stackuser_rule':
-       path => '/etc/sudoers',
-       line => "${stackuser} ALL=(ALL) NOPASSWD:ALL"
-    } ->
-    group {  $stackuser : ensure => 'present'; } ->
-    user  {  $stackuser : ensure => 'present'; }
-
     if $::install_devstack == "true"  {
+        if $::stackuser != "nil" {
+            $stackuser = $::stackuser
+        }
+        else {
+            $stackuser = "stack" 
+        }
+
+        file_line { 'stackuser_rule':
+            path => '/etc/sudoers',
+            line => "${stackuser} ALL=(ALL) NOPASSWD:ALL"
+        } ->
+        group {  $stackuser : ensure => 'present'; } ->
+        user  {  $stackuser : 
+            ensure => present, 
+            comment => "Stacker",
+            gid => $stackuser,
+            shell => "/bin/bash",
+            home => "/home/${stackuser}",
+            require => Group[$stackuser],
+        }
+
         case $::devstack_branch {
             /(stable\/grizzly|stable\/havana|master)/: {
                 class { 'devstack':  devstack_branch => $::devstack_branch, stackuser => $stackuser }
