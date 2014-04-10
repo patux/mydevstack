@@ -60,6 +60,9 @@ echo enable_service n-novnc >> <%= devstack_conf_file %>
 echo enable_service n-xvnc >> <%= devstack_conf_file %>
 echo enable_service n-cauth >> <%= devstack_conf_file %>
 echo enable_service dstat >> <%= devstack_conf_file %>
+echo enable_service n-novnc >> <%= devstack_conf_file %>
+echo enable_service n-xvnc >> <%= devstack_conf_file %>
+echo enable_service n-cauth >> <%= devstack_conf_file %>
 # Optional, to enable tempest configuration as part of devstack
 echo  enable_service tempest >> <%= devstack_conf_file %>
 cat << EOF >> <%= devstack_conf_file %> 
