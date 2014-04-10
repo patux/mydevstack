@@ -123,10 +123,10 @@ if  is_service_enabled n-api || is_service_enabled neutron; then
 fi
 # Allowing guests in DevStack to talk to outside world 
 # https://ask.openstack.org/en/question/1830/allowing-guests-in-devstack-to-talk-to-outside-world/
-/sbin/iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+sudo /sbin/iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
 # Save lists
 # https://help.ubuntu.com/community/IptablesHowTo
-/sbin/iptables-save -c > /etc/iptables.rules
+sudo /sbin/iptables-save -c | sudo tee /etc/iptables.rules
 cat << EOF > /etc/network/if-pre-up.d/iptablesload
 #!/bin/sh
 /sbin/iptables-restore < /etc/iptables.rules
@@ -140,8 +140,8 @@ if [ -f /etc/iptables.downrules ]; then
 fi
 exit 0
 EOF
-chmod +x /etc/network/if-post-down.d/iptablessave
-chmod +x /etc/network/if-pre-up.d/iptablesload
+sudo chmod +x /etc/network/if-post-down.d/iptablessave
+sudo chmod +x /etc/network/if-pre-up.d/iptablesload
 EOS
 chmod +x /home/<%= @stackuser %>/devstack/local.sh
 
