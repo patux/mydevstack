@@ -6,12 +6,18 @@ class base {
     timeout   => 0,
     logoutput => true,
   }
+  exec {"hold cloudinit":
+    command   => "/usr/bin/apt-mark hold cloud-init; echo ",
+    logoutput => true, 
+    onlyif    => "dpkg -la | grep cloud-init | awk '{print $2}'",
+  }
+
   exec {"update apt":
     command   => "/bin/bash -c 'source /etc/environment;/usr/bin/apt-get -y update;/usr/bin/apt-get -y dist-upgrade'",
     #command  => "apt-get -y update",
     timeout   => 0,
     logoutput => true,
-    require => Exec["hold kernel"],
+    require => Exec["hold kernel","hold cloudinit"],
   }
 
   group { "puppet": ensure => "present"; }  ->
