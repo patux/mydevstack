@@ -1,0 +1,65 @@
+#!/bin/bash
+#
+# Build devstack
+# This script will install devstack with the same configuration and modules as in https://github.com/patux/mydevstack
+# on the host it is called perfect to run on top of openstack vms, looking fwd to do CI/CD 
+#
+# Requires: puppet
+# Geronimo Orozco geronimo.orozco@intel.com
+#
+# parse_yaml taken from:
+# From: http://stackoverflow.com/questions/5014632/how-can-i-parse-a-yaml-file-from-a-linux-shell-script
+#
+
+if [ "$EUID" -ne "0" ]; then
+  echo "$(date +"%F %T.%N") ERROR : This script must be run as root." >&2
+  exit 1
+fi
+
+[ -d /tmp/mydevstack ] && rm -rf /tmp/mydevstack : #donothing 
+apt-get install git -y 
+# if you are behind a proxy uncomment and edit next line 
+# https_proxy=myproxy.url.com:port
+git clone https://github.com/patux/mydevstack.git /tmp/mydevstack --recursive
+cd /tmp/mydevstack
+# Remove run devstack in the the backgroud
+sed -i s/'\&'//g puppet/modules/devstack/manifests/init.pp
+# Create your common.yaml with your proxy variables if needed
+# Uncomment the following lines for such thing
+#
+# cat << EOF > etc/common.yaml
+# http_proxy_host: "http://myproxy.url.com"
+# http_proxy_port: "3128"
+# https_proxy_host: "http://myproxy.url.com"
+# https_proxy_port: "3128"
+# socks_proxy_host: "socks://myproxy.url.com"
+# socks_proxy_port: "8080"
+# no_proxy_domains: ".yourcompany.com,.mylocalnet.com"
+# ssh_dir: '~/.ssh/'
+# memory: 4096
+# install_devstack: true
+# devstack_branch: "master"
+# EOF
+
+function parse_yaml {
+   local prefix=$2
+   local s='[[:space:]]*' w='[a-zA-Z0-9_]*' fs=$(echo @|tr @ '\034')
+   sed -ne "s|^\($s\):|\1|" \
+        -e "s|^\($s\)\($w\)$s:$s[\"']\(.*\)[\"']$s\$|\1$fs\2$fs\3|p" \
+        -e "s|^\($s\)\($w\)$s:$s\(.*\)$s\$|\1$fs\2$fs\3|p"  $1 |
+   awk -F$fs '{
+      indent = length($1)/2;
+      vname[indent] = $2;
+      for (i in vname) {if (i > indent) {delete vname[i]}}
+      if (length($3) > 0) {
+         vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+         printf("%s%s%s=\"%s\"\n", "'$prefix'",vn, $2, $3);
+      }
+   }'
+}
+export $(for i in `parse_yaml etc/common.yaml `; do echo FACTER_$i; done);
+# Install puppet if it does not exists
+if [ -z `dpkg -la | grep "puppet " | awk '{print $2}'` ] ; then
+    apt-get -y --force-yes -o Dpkg::Options::="--force-confnew" install puppet
+fi
+puppet apply --verbose --node_name_value `hostname -a` --http_proxy_host $FACTER_http_proxy_host --http_proxy_port $FACTER_http_proxy_port  --modulepath puppet/modules --manifestdir puppet/manifests --detailed-exitcodes puppet/manifests/vagrant.pp
