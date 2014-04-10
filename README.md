@@ -1,7 +1,9 @@
-# Vagrant Devstack Environment
+# Vagrant Devstack Environment w/Proxy support
 
 This environments creates a devstack environment.
-Also if you are behind a proxy this environment adds the proper modules to get and configure the environment behing it 
+Also if you are behind a proxy this environment adds the proper modules to get and configure the environment behind it 
+
+If you are not behind a proxy just leave the variables as nil
 
 http://devstack.org/
 
