@@ -1,19 +1,19 @@
 # Due https://pypi.python.org/pypi/requests
 # Proxy URLs now must have an explicit scheme. A MissingSchema exception will be raised if they don't.
-http_proxy_host: "http://proxy.mylocalnet.com" 
-http_proxy_port: "3128"
-https_proxy_host: "https://proxy.mylocalnet.com"
-https_proxy_port: "3128"
-socks_proxy_host: "socks://10.20.30.40" 
-socks_proxy_port: "1080"
-ftp_proxy_host: "ftp://10.20.30.40" 
-ftp_proxy_port: "2121"
+http_proxy_host: http://proxy.mylocalnet.com 
+http_proxy_port: 3128
+https_proxy_host: https://proxy.mylocalnet.com
+https_proxy_port: 3128
+socks_proxy_host: socks://10.20.30.40 
+socks_proxy_port: 1080
+ftp_proxy_host: ftp://10.20.30.40 
+ftp_proxy_port: 2121
 host_ip: '10.10.10.5'
-no_proxy_domains: ".mycompany.com,.mylocalnet.com"
+no_proxy_domains: .mycompany.com,.mylocalnet.com
 ssh_dir: '~/.ssh/'
-memory: 6048
+memory: 6144
 http_port_map: 8888
 ssh_port_map: 2022
 install_devstack: true
-devstack_branch: "master"
-stackuser: "vagrant"
+devstack_branch: master
+stackuser: vagrant
