@@ -184,25 +184,18 @@ echo "Running local.sh"
 openrc=/home/<%= @stackuser %>/devstack/openrc
 source functions
 
-if  is_service_enabled n-api || is_service_enabled neutron; then
-    for user in admin demo; do
-        source \$openrc \$user \$user
-        <% if @vm_type != "vagrant" %> 
-        nova keypair-add \$user > /home/<%= @stackuser %>/.ssh/\$user.pem 
-        chown <%= @stackuser %>:<%= @stackuser %> /home/<%= @stackuser %>/.ssh/\$user.pem
-        chmod 600 /home/<%= @stackuser %>/.ssh/\$user.pem
-        <% else %>
-        nova keypair-add --pub-key /home/<%= @stackuser %>/.ssh/id_rsa.pub mykey
-        <% end %>
-        if is_service_enabled n-api; then 
-            nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
-            nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
-        elif is_service_enabled neutron; then
-            neutron security-group-rule-create --protocol icmp --direction ingress default
-            neutron security-group-rule-create --protocol tcp --port-range-min 22 --port-range-max 22 --direction ingress default
-        fi
-    done
-fi
+for user in admin demo; do
+    source \$openrc \$user \$user
+    <% if @vm_type != "vagrant" %> 
+    nova keypair-add \$user > /home/<%= @stackuser %>/.ssh/\$user.pem 
+    chown <%= @stackuser %>:<%= @stackuser %> /home/<%= @stackuser %>/.ssh/\$user.pem
+    chmod 600 /home/<%= @stackuser %>/.ssh/\$user.pem
+    <% else %>
+    nova keypair-add --pub-key /home/<%= @stackuser %>/.ssh/id_rsa.pub mykey
+    <% end %>
+    neutron security-group-rule-create --protocol icmp --direction ingress default
+    neutron security-group-rule-create --protocol tcp --port-range-min 22 --port-range-max 22 --direction ingress default
+done
 # Allowing guests in DevStack to talk to outside world 
 # https://ask.openstack.org/en/question/1830/allowing-guests-in-devstack-to-talk-to-outside-world/
 sudo /sbin/iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
