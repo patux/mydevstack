@@ -1,5 +1,6 @@
 #!/bin/bash
 # Base template to create a localrc or local.conf to bulid devstack
+# This devstack will need at least 8Gb to run a real vm with ubuntu or fedora
 #
 # A reference for a good localrc here:
 # http://www.sebastien-han.fr/blog/2013/08/16/best-localrc-for-devstack/
@@ -48,26 +49,14 @@ echo SERVICE_PASSWORD=password >> <%= devstack_conf_file %>
 echo ADMIN_PASSWORD=password >> <%= devstack_conf_file %>
 echo SERVICE_TOKEN=`uuid`  >> <%= devstack_conf_file %>
 echo >> <%= devstack_conf_file %> 
-echo LOGFILE=/opt/stack/stack.sh.log >> <%= devstack_conf_file %>
-echo disable_service n-net >> <%= devstack_conf_file %>
-echo enable_service q-svc >> <%= devstack_conf_file %>
-echo enable_service q-agt >> <%= devstack_conf_file %>
-echo enable_service q-dhcp >> <%= devstack_conf_file %>
-echo enable_service q-l3 >> <%= devstack_conf_file %>
-echo enable_service q-meta >> <%= devstack_conf_file %>
-echo enable_service neutron >> <%= devstack_conf_file %>
-echo enable_service n-novnc >> <%= devstack_conf_file %>
-echo enable_service n-xvnc >> <%= devstack_conf_file %>
-echo enable_service n-cauth >> <%= devstack_conf_file %>
-echo enable_service dstat >> <%= devstack_conf_file %>
-echo enable_service n-novnc >> <%= devstack_conf_file %>
-echo enable_service n-xvnc >> <%= devstack_conf_file %>
-echo enable_service n-cauth >> <%= devstack_conf_file %>
-# Optional, to enable tempest configuration as part of devstack
-echo  enable_service tempest >> <%= devstack_conf_file %>
+
+# Repos
 cat << EOF >> <%= devstack_conf_file %> 
-# Reclone each time
+disable_service n-net
 IMAGE_URLS+=",https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
+IMAGE_URLS+=",http://fedorapeople.org/groups/heat/prebuilt-jeos-images/F17-x86_64-cfntools.qcow2,http://cloud-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64-disk1.img"
+
+# Reclone each time
 RECLONE=yes
 
 ## For Keystone
@@ -77,22 +66,112 @@ KEYSTONE_TOKEN_FORMAT=PKI
 VERBOSE=True
 LOG_COLOR=True
 SCREEN_LOGDIR=/opt/stack/logs
-LOGFILE=/opt/stack/stack.sh.log
+LOGFILE=/opt/stack/logs/stack.sh.log
 LOGDAYS=2
+
+# Pre-requisite
+ENABLED_SERVICES=rabbit,mysql,key
+
+# If you want ZeroMQ instead of RabbitMQ (don't forget to un-declare 'rabbit' from the pre-requesite)
+# ENABLED_SERVICES+=,-rabbit,-qpid,zeromq
+
+# If you want Qpid instead of RabbitMQ (don't forget to un-declare 'rabbit' from the pre-requesite)
+# ENABLED_SERVICES+=,-rabbit,-zeromq,qpid
+
+# Nova - Compute Service
+ENABLED_SERVICES+=,n-api,n-crt,n-obj,n-cpu,n-cond,n-sch
+
+# Dstat
+ENABLED_SERVICES+=,dstat
+
+# VNC
+ENABLED_SERVICES+=,n-novnc,n-xvnc,n-cauth
+
+# Nova Network - If you don't want to use Neutron and need a simple network setup (old good stuff!)
+# ENABLED_SERVICES+=,n-net
+
+# Glance - Image Service
+ENABLED_SERVICES+=,g-api,g-reg
+
+# Neutron - Networking Service
+# If Neutron is not declared the old good nova-network will be used
+ENABLED_SERVICES+=,q-svc,q-agt,q-dhcp,q-l3,q-meta,neutron
+
+# Cinder - Block Device Service
+ENABLED_SERVICES+=,cinder,c-api,c-vol,c-sch,c-bak
 
 # Horizon (Dashboard UI) - (always use the trunk)
 ENABLED_SERVICES+=,horizon
 
-IMAGE_URLS+=",https://launchpad.net/cirros/trunk/0.3.0/+download/cirros-0.3.0-x86_64-disk.img"
-IMAGE_URLS+=",http://fedorapeople.org/groups/heat/prebuilt-jeos-images/F17-x86_64-cfntools.qcow2,http://cloud-images.ubuntu.com/precise/current/precise-server-cloudimg-amd64-disk1.img"
- 
+# Apache fronted for WSGI
+APACHE_ENABLED_SERVICES+=keystone
+
+# Tempest
+ENABLED_SERVICES+=,tempest
+
+<% if @devstack_setup == "complex" %>
+################## Complex #############################
+
+# For Swift
+SWIFT_REPLICAS=1
+SWIFT_HASH=011688b44136573e209e
+SWIFT_DATA_DIR=\$DEST/data
+
+# Apache fronted for WSGI
+APACHE_ENABLED_SERVICES+=,swift
+
+# Nova Cells
+# ENABLED_SERVICES+=,n-cell
+
+# Swift - Object Storage
+ENABLED_SERVICES+=,s-proxy,s-object,s-container,s-account
+
+# Neutron - Load Balancing
+ENABLED_SERVICES+=,q-lbaas
+
+# Neutron - VPN as a Service
+ENABLED_SERVICES+=,q-vpn
+
+# Neutron - Firewall as a Service
+ENABLED_SERVICES+=,q-fwaas
+
+# VLAN configuration
+ENABLE_TENANT_VLANS=True
+ML2_VLAN_RANGES=mynetwork:100:200 
+# Q_PLUGIN=ml2
+
+# GRE tunnel configuration
+# Q_PLUGIN=ml2
+# ENABLE_TENANT_TUNNELS=True
+
+# VXLAN tunnel configuration
+# Q_PLUGIN=ml2
+# Q_ML2_TENANT_NETWORK_TYPE=vxlan   
+
+ENABLE_TENANT_TUNNELS=True
+Q_AGENT_EXTRA_AGENT_OPTS=(tunnel_type=gre)
+Q_AGENT_EXTRA_OVS_OPTS=(tenant_network_type=gre)
+Q_SRV_EXTRA_OPTS=(tenant_network_type=gre)
+Q_USE_NAMESPACE=True
+Q_USE_SECGROUP=True
+
+# Heat - Orchestration Service
+ENABLED_SERVICES+=,heat,h-api,h-api-cfn,h-api-cw,h-eng
+
+# Ceilometer - Metering Service (metering + alarming)
+ENABLED_SERVICES+=,ceilometer-acompute,ceilometer-acentral,ceilometer-collector,ceilometer-api
+ENABLED_SERVICES+=,ceilometer-alarm-notify,ceilometer-alarm-eval
+
+# Trove
+ENABLED_SERVICES+=,tr-api,tr-tmgr,tr-cond,trove
+<% end %>
 EOF
 <% if has_variable?("ipaddress_eth1") %><% then %>
     echo HOST_IP=<%= @ipaddress_eth1 %> >> <%= devstack_conf_file %>
-    FLAT_INTERFACE=eth1
+    echo FLAT_INTERFACE=eth1 >> <%= devstack_conf_file %>
 <% else %>
     echo HOST_IP=<%= @ipaddress_eth0 %> >> <%= devstack_conf_file %>
-    FLAT_INTERFACE=eth0
+    echo FLAT_INTERFACE=eth0 >> <%= devstack_conf_file %>
 <% end %>
 
 # Build local.sh script

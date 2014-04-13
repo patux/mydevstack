@@ -44,7 +44,10 @@ Enabled services:
 
 You will need 8GB at least for your devstack environment
 
-    $ git checkout complex
+Add devstack_setup: complex to etc/common.yaml
+
+    $ vi etc/common.yaml 
+    devstack_setup: complex 
 
 Enabled services:
   * nova

@@ -11,9 +11,10 @@ ftp_proxy_port: 2121
 host_ip: '10.10.10.5'
 no_proxy_domains: .mycompany.com,.mylocalnet.com
 ssh_dir: '~/.ssh/'
-memory: 6144
+memory: 6144 # if you will use complex setup use 8G minimum here
 http_port_map: 8888
 ssh_port_map: 2022
 install_devstack: true
 devstack_branch: master
 stackuser: vagrant
+devstack_setup: simple # if complex setup is used make sure you increase the memory 
