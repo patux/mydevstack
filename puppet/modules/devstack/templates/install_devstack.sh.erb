@@ -17,8 +17,10 @@ git clone https://github.com/openstack-dev/devstack.git -b <%= @devstack_branch 
 cd devstack
 git checkout <%= @devstack_branch %>
 <% if @devstack_branch == "master" or @devstack_branch == "stable/icehouse" %>
-    <% devstack_conf_file = "localrc" %>
-    #echo [[local\|localrc]] > <%= devstack_conf_file %>
+    <% devstack_conf_file = "local.conf" %>
+    echo StrictHostKeyChecking=no >> ~/.ssh/config
+    git fetch https://review.openstack.org/openstack-dev/devstack refs/changes/20/85120/2 && git cherry-pick FETCH_HEAD
+    echo [[local\|localrc]] > <%= devstack_conf_file %>
 <% else %>
     <% devstack_conf_file = "localrc" %>
 <% end %>
@@ -109,6 +111,13 @@ APACHE_ENABLED_SERVICES+=keystone
 # Tempest
 ENABLED_SERVICES+=,tempest
 
+<% if has_variable?("ipaddress_eth1") %><% then %>
+HOST_IP=<%= @ipaddress_eth1 %>
+FLAT_INTERFACE=eth1
+<% else %>
+HOST_IP=<%= @ipaddress_eth0 %>
+FLAT_INTERFACE=eth0
+<% end %>
 <% if @devstack_setup == "complex" %>
 ################## Complex #############################
 
@@ -137,23 +146,23 @@ ENABLED_SERVICES+=,q-fwaas
 
 # VLAN configuration
 ENABLE_TENANT_VLANS=True
-ML2_VLAN_RANGES=mynetwork:100:200 
-# Q_PLUGIN=ml2
+Q_PLUGIN=ml2
 
 # GRE tunnel configuration
-# Q_PLUGIN=ml2
-# ENABLE_TENANT_TUNNELS=True
+Q_PLUGIN=ml2
+ENABLE_TENANT_TUNNELS=True
 
 # VXLAN tunnel configuration
 # Q_PLUGIN=ml2
-# Q_ML2_TENANT_NETWORK_TYPE=vxlan   
+# Q_ML2_TENANT_NETWORK_TYPE=vxlan
 
 ENABLE_TENANT_TUNNELS=True
+<% if @devstack_branch != "master" or @devstack_branch == "stable/icehouse" %>
 Q_AGENT_EXTRA_AGENT_OPTS=(tunnel_type=gre)
 Q_AGENT_EXTRA_OVS_OPTS=(tenant_network_type=gre)
 Q_SRV_EXTRA_OPTS=(tenant_network_type=gre)
-Q_USE_NAMESPACE=True
-Q_USE_SECGROUP=True
+<% end %>
+TENANT_TUNNEL_RANGE=50:100
 
 # Heat - Orchestration Service
 ENABLED_SERVICES+=,heat,h-api,h-api-cfn,h-api-cw,h-eng
@@ -164,16 +173,19 @@ ENABLED_SERVICES+=,ceilometer-alarm-notify,ceilometer-alarm-eval
 
 # Trove
 ENABLED_SERVICES+=,tr-api,tr-tmgr,tr-cond,trove
+
+<% if @devstack_branch == "master" or @devstack_branch == "stable/icehouse" %>
+[[post-config|/\$Q_PLUGIN_CONF_FILE]]
+[agent]
+tunnel_type=gre
+
+[[post-config|\$NEUTRON_CONF]]
+[DEFAULT]
+tenant_network_type=gre
+<% end %>
 <% end %>
 EOF
-<% if has_variable?("ipaddress_eth1") %><% then %>
-    echo HOST_IP=<%= @ipaddress_eth1 %> >> <%= devstack_conf_file %>
-    echo FLAT_INTERFACE=eth1 >> <%= devstack_conf_file %>
-<% else %>
-    echo HOST_IP=<%= @ipaddress_eth0 %> >> <%= devstack_conf_file %>
-    echo FLAT_INTERFACE=eth0 >> <%= devstack_conf_file %>
-<% end %>
-
+#
 # Build local.sh script
 cat << EOS > $HOME/devstack/local.sh
 #!/bin/bash
