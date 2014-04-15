@@ -217,7 +217,6 @@ sudo sh -c "iptables-save -c > /etc/iptables.rules"
 sudo sh -c "cat << EOF > /etc/network/if-pre-up.d/iptablesload
 #!/bin/sh
 /sbin/iptables-restore < /etc/iptables.rules
-exit 0
 EOF"
 sudo sh -c "cat << EOF > /etc/network/if-post-down.d/iptablessave
 #!/bin/sh
@@ -225,7 +224,6 @@ sudo sh -c "cat << EOF > /etc/network/if-post-down.d/iptablessave
 if [ -f /etc/iptables.downrules ]; then
     /sbin/iptables-restore < /etc/iptables.downrules
 fi
-exit 0
 EOF"
 sudo chmod +x /etc/network/if-post-down.d/iptablessave
 sudo chmod +x /etc/network/if-pre-up.d/iptablesload
