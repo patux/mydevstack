@@ -16,6 +16,7 @@ if [ "$EUID" -ne "0" ]; then
   exit 1
 fi
 
+
 # Sanitize the environment
 apt-get update
 apt-get -y --force-yes -o Dpkg::Options::="--force-confnew" install puppet
@@ -27,23 +28,25 @@ apt-get install git -y
 git clone https://github.com/patux/mydevstack.git /tmp/mydevstack --recursive
 cd /tmp/mydevstack
 # Remove run devstack in the the backgroud
-sed -i s/'\&'//g puppet/modules/devstack/manifests/init.pp
+# sed -i s/'\&'//g puppet/modules/devstack/manifests/init.pp
 # Create your common.yaml with your proxy variables if needed
-# Uncomment the following lines for such thing
-#
-# cat << EOF > etc/common.yaml
-# http_proxy_host: http://myproxy.url.com
-# http_proxy_port: 3128
-# https_proxy_host: http://myproxy.url.com
-# https_proxy_port: 3128
-# socks_proxy_host: socks://myproxy.url.com
-# socks_proxy_port: 8080
-# no_proxy_domains: .yourcompany.com,.mylocalnet.com
-# ssh_dir: '~/.ssh/'
-# memory: 6144
-# install_devstack: true
-# devstack_branch: master
-# EOF
+# Replace the values as you need 
+# If you are not behind a proxy use nil as a value for proxy  and no_proxy values variables
+cat << EOF > etc/common.yaml
+http_proxy_host: http://myproxy.url.com 
+http_proxy_port: 3128
+https_proxy_host: http://myproxy.url.com
+https_proxy_port: 3128
+socks_proxy_host: socks://myproxy.url.com
+socks_proxy_port: 8080
+no_proxy_domains: .yourcompany.com,.mylocalnet.com,169.254.169.254
+ssh_dir: '~/.ssh/'
+memory: 6144
+install_devstack: true
+devstack_branch: master
+devstack_setup: simple
+devstack_user: stack
+EOF
 
 function parse_yaml {
    local prefix=$2
@@ -72,5 +75,10 @@ do
   export FACTER_$i
 done
 
-puppet apply --verbose --node_name_value `hostname -f` --http_proxy_host $FACTER_http_proxy_host --http_proxy_port $FACTER_http_proxy_port  --modulepath puppet/modules --manifestdir puppet/manifests --detailed-exitcodes puppet/manifests/vagrant.pp  | tee /var/log/devstack_install.log
+# if proxy variables are set then we need to call puppet with these variables
+if [ $FACTER_http_proxy_host != "nil" ]; then
+    no_proxy=$FACTER_no_proxy_domains puppet apply --verbose --node_name_value `hostname -f` --http_proxy_host $FACTER_http_proxy_host --http_proxy_port $FACTER_http_proxy_port  --modulepath puppet/modules --manifestdir puppet/manifests --detailed-exitcodes puppet/manifests/vagrant.pp &>/var/log/devstack_install.log
+else
+    puppet apply --verbose --node_name_value `hostname -f`  --modulepath puppet/modules --manifestdir puppet/manifests --detailed-exitcodes puppet/manifests/vagrant.pp &>/var/log/devstack_install.log
+fi
 

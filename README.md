@@ -3,15 +3,13 @@
 This environments creates a devstack environment.
 Also if you are behind a proxy this environment adds the proper modules to get and configure the environment behind it 
 
-If you are not behind a proxy just leave the variables as nil
-
 http://devstack.org/
 
-The devstack install process is kicked into the background.  The standard output of the install is redirected to /opt/stack/logs/stack.sh.log and /tmp/devstack-install.log 
+**IMPORTANT NOTES**
 
-You can change the branch to use to build the environment in: puppet/modules/devstack/manifests/nodes.pp 
-Ddefault is **master**
-
+  * Once puppet finishes, The devstack install process is kicked into the background. You still have to wait for devstack to finish. The standard output of the install is redirected to /opt/stack/logs/stack.sh.log and /tmp/devstack-install.log 
+  * Use etc/common-sample.yaml as a guide to create etc/common.yaml to build your environment
+  * If you are not behind a proxy do not set them in the yaml file
 
 ## Instructions
 ### Get the code and prepare the environment
