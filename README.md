@@ -7,9 +7,10 @@ http://devstack.org/
 
 **IMPORTANT NOTES**
 
-  * Once puppet finishes, The devstack install process is kicked into the background. You still have to wait for devstack to finish. The standard output of the install is redirected to /opt/stack/logs/stack.sh.log and /tmp/devstack-install.log 
+  * Once puppet finishes, **The devstack install process is kicked into the background**. You still have to wait for devstack to finish. Instlaler Logs  **/opt/stack/logs/stack.sh.log** and **/tmp/devstack-install.log**
   * Use etc/common-sample.yaml as a guide to create etc/common.yaml to build your environment
   * If you are not behind a proxy do not set them in the yaml file
+  * Devstack credentials: admin/password and demo/password
 
 ## Instructions
 ### Get the code and prepare the environment
