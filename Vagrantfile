@@ -40,9 +40,11 @@ ssh_dir        = conf['ssh_dir']
 memory         = conf['memory']
 http_port_map  = conf['http_port_map']
 ssh_port_map   = conf['ssh_port_map']
+hostname = "devstack-" + conf['devstack_branch'].split('/').last 
+domain = "mylocalnet.com"
 
 Vagrant.configure("2") do |config|
-  config.vm.hostname = "devstack.mylocalnet.com"
+  config.vm.hostname = hostname + '.' + domain
   config.vm.box = "precise64"
   config.vm.box_url = "http://files.vagrantup.com/precise64.box"
 
